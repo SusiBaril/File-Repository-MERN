@@ -3,15 +3,15 @@
 import * as React from "react"
 import {
   AudioWaveform,
-  BookOpen,
-  Bot,
   Command,
   Frame,
   GalleryVerticalEnd,
   Map,
   PieChart,
   Settings2,
-  SquareTerminal,
+  LayoutDashboard,
+  FolderOpen,
+  Activity
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -53,20 +53,20 @@ const data = {
   navMain: [
     {
       title: "Dashboard",
-      url: "#",
-      icon: SquareTerminal,
+      url: "/dashboard/overview",
+      icon: LayoutDashboard, // better than SquareTerminal
       isActive: true,
       items: [
         {
-          title: "History",
+          title: "Overview",
+          url: "/dashboard/overview",
+        },
+        {
+          title: "Recent Files",
           url: "#",
         },
         {
-          title: "Starred",
-          url: "#",
-        },
-        {
-          title: "Settings",
+          title: "Starred Files",
           url: "#",
         },
       ],
@@ -74,18 +74,22 @@ const data = {
     {
       title: "File Repository",
       url: "#",
-      icon: Bot,
+      icon: FolderOpen, // clearly represents files & folders
       items: [
         {
-          title: "Genesis",
+          title: "All Files",
           url: "#",
         },
         {
-          title: "Explorer",
+          title: "Folders",
           url: "#",
         },
         {
-          title: "Quantum",
+          title: "Shared With Me",
+          url: "#",
+        },
+        {
+          title: "Trash",
           url: "#",
         },
       ],
@@ -93,22 +97,22 @@ const data = {
     {
       title: "Activity",
       url: "#",
-      icon: BookOpen,
+      icon: Activity, // logs, tracking, history
       items: [
         {
-          title: "Introduction",
+          title: "Upload History",
           url: "#",
         },
         {
-          title: "Get Started",
+          title: "Download Logs",
           url: "#",
         },
         {
-          title: "Tutorials",
+          title: "File Changes",
           url: "#",
         },
         {
-          title: "Changelog",
+          title: "Audit Trail",
           url: "#",
         },
       ],
@@ -116,26 +120,26 @@ const data = {
     {
       title: "Settings",
       url: "#",
-      icon: Settings2,
+      icon: Settings2, // simpler & more recognizable
       items: [
         {
-          title: "General",
+          title: "General Settings",
           url: "#",
         },
         {
-          title: "Team",
+          title: "User & Permissions",
           url: "#",
         },
         {
-          title: "Billing",
+          title: "Storage & Quota",
           url: "#",
         },
         {
-          title: "Limits",
+          title: "Security",
           url: "#",
         },
       ],
-    },
+    },    
   ],
   repository: [
     {
