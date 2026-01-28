@@ -29,13 +29,13 @@ import {
 // This is sample data.
 const data = {
   user: {
-    name: "shadcn",
-    email: "m@example.com",
+    name: "Keegan Rosales",
+    email: "rosaleskeegan@gmail.com",
     avatar: "/avatars/shadcn.jpg",
   },
   teams: [
     {
-      name: "Acme Inc",
+      name: "Hotdog",
       logo: GalleryVerticalEnd,
       plan: "Enterprise",
     },
