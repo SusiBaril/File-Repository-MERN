@@ -26,10 +26,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
-import { MoreHorizontal, Share2, Archive, Trash2, ChevronLeft, ChevronRight, X, Star } from "lucide-react"
+import { MoreHorizontal, Share2, Archive, Trash2, ChevronLeft, ChevronRight, X, Star, Search, Copy, Check } from "lucide-react"
 import dummyData from '../data/dummy-data.json';
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
 import { Toaster } from "@/components/ui/sonner"
 import { toast } from "sonner"
 import {
@@ -37,6 +36,17 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { ScrollArea } from '@/components/ui/scroll-area'
 
 function Home() {
 
@@ -52,6 +62,56 @@ function Home() {
   const [activeFilter, setActiveFilter] = useState('');
   const [sortOrder, setSortOrder] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+
+  const [starredFiles, setStarredFiles] = useState(new Set());
+  const [archivedFiles, setArchivedFiles] = useState(new Set());
+
+  const handleStarFile = (fileName) => {
+    const isStarred = starredFiles.has(fileName);
+
+    setStarredFiles(prev => {
+      const newSet = new Set(prev);
+      if (isStarred) {
+        newSet.delete(fileName);
+      } else {
+        newSet.add(fileName);
+      }
+      return newSet;
+    });
+
+    // Toast after state update
+    if (isStarred) {
+      toast.success(`Removed ${fileName} from Starred`);
+    } else {
+      toast.success(`Added ${fileName} to Starred`);
+    }
+  };
+
+  const handleArchiveFile = (fileName) => {
+    const isArchived = archivedFiles.has(fileName);
+
+    setArchivedFiles(prev => {
+      const newSet = new Set(prev);
+      if (isArchived) {
+        newSet.delete(fileName);
+      } else {
+        newSet.add(fileName);
+      }
+      return newSet;
+    });
+
+    // Toast after state update
+    if (isArchived) {
+      toast.success(`Unarchived ${fileName}`);
+    } else {
+      toast.success(`Archived ${fileName}`);
+    }
+  };
+
+  const handleDeleteFile = (fileName) => {
+    setRecentFiles(prev => prev.filter(file => file.name !== fileName));
+    toast.success(`Deleted ${fileName}`);
+  };
 
   const clearAllFilter = () => {
     setActiveFilter('');
@@ -71,6 +131,9 @@ function Home() {
   }
 
   const filteredFiles = recentFiles.filter(file => {
+    // Don't show archived files in the main view
+    if (archivedFiles.has(file.name)) return false;
+
     const matchesSearch = file.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       file.type.toLowerCase().includes(searchQuery.toLowerCase());
 
@@ -668,13 +731,17 @@ function Home() {
           <div className="bg-white shadow-sm p-5 m-5 h-[59vh] flex-1 rounded-xl md:min-h-min mt-4">
             <div className='w-full flex flex-col gap-3'>
               <h1 className='text-2xl'>Recent Activity</h1>
-              <input
-                className='border-2 rounded-full p-2 w-full hover:border-black'
-                type="text"
-                placeholder='Search'
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+              <div className='relative'>
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <input
+                  className='border-2 rounded-full pl-8 p-1 w-full hover:border-black'
+                  type="text"
+                  id="search"
+                  placeholder='Search'
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
               <div className='flex flex-row items-center gap-2'>
                 <p>Filter:</p>
                 <Button
@@ -797,19 +864,113 @@ function Home() {
                               <Tooltip>
                                 <TooltipTrigger>
                                   <Share2 className="w-4 h-4" />
-                                  </TooltipTrigger>
+                                </TooltipTrigger>
                                 <TooltipContent>
                                   <p>Share</p>
                                 </TooltipContent>
                               </Tooltip>
                             </DialogTrigger>
-                            <DialogContent>
+                            <DialogContent className="max-w-md">
                               <DialogHeader>
-                                <DialogTitle>Are you absolutely sure?</DialogTitle>
+                                <DialogTitle>Share File</DialogTitle>
                                 <DialogDescription>
-                                  This action cannot be undone. This will permanently delete your account
-                                  and remove your data from our servers.
+                                  Share this file with others via email or link
                                 </DialogDescription>
+                                <Tabs defaultValue="account" className="w-full">
+                                  <TabsList className="grid w-full grid-cols-2">
+                                    <TabsTrigger value="users">Share with Users</TabsTrigger>
+                                    <TabsTrigger value="link">Share Link</TabsTrigger>
+                                  </TabsList>
+                                  <TabsContent value="users">
+                                    <div className="mt-4 space-y-2">
+                                      <Label htmlFor="permission">Default Permission</Label>
+                                      <Select>
+                                        <SelectTrigger className="w-fit">
+                                          <SelectValue placeholder="Permission" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="view">View</SelectItem>
+                                          <SelectItem value="comment">Comment</SelectItem>
+                                          <SelectItem value="edit">Edit</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                    <div className="mt-4 space-y-2">
+                                      <Label htmlFor="email">Share by Email</Label>
+                                      <div className="flex gap-2">
+                                        <Input
+                                          id="email"
+                                          placeholder="Enter email address"
+                                          type="email"
+                                        />
+                                        <Button size="sm">
+                                          Add
+                                        </Button>
+                                      </div>
+                                    </div>
+                                    <div className="mt-4 space-y-2">
+                                      <Label htmlFor="search">Or select from users</Label>
+                                      <div className="relative">
+                                        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                                        <Input
+                                          id="search"
+                                          placeholder="Search users..."
+                                          className="pl-8"
+                                        />
+                                      </div>
+                                    </div>
+                                    <div className="flex gap-2 justify-end pt-2">
+                                      <Button variant="outline">
+                                        Cancel
+                                      </Button>
+                                      <Button>
+                                        Share
+                                      </Button>
+                                    </div>
+                                  </TabsContent>
+                                  <TabsContent value="link">
+                                    <div className="space-y-2">
+                                      <Label>Share via Link</Label>
+                                      <p className="text-sm text-muted-foreground">
+                                        Anyone with this link can access the file
+                                      </p>
+                                    </div>
+                                    <div className="my-4 space-y-2">
+                                      <Label htmlFor="share-link">Share Link</Label>
+                                      <div className="flex gap-2">
+                                        <Input
+                                          id="share-link"
+                                          readOnly
+                                          className="bg-muted"
+                                        />
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          className="px-3 bg-transparent"
+                                        >
+                                        </Button>
+                                      </div>
+                                    </div>
+
+                                    <div className="my-4 space-y-2">
+                                      <Label htmlFor="link-permission">Default Permission</Label>
+                                      <Select defaultValue="view">
+                                        <SelectTrigger id="link-permission">
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="view">View</SelectItem>
+                                          <SelectItem value="comment">Comment</SelectItem>
+                                          <SelectItem value="edit">Edit</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+
+                                    <Button className="w-full">
+                                      Done
+                                    </Button>
+                                  </TabsContent>
+                                </Tabs>
                               </DialogHeader>
                             </DialogContent>
                           </Dialog>
@@ -822,18 +983,24 @@ function Home() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuGroup>
-                                <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
+                                <DropdownMenuItem
+                                  className="flex items-center gap-2 cursor-pointer"
+                                  onClick={() => handleStarFile(file.name)}
+                                >
+                                  <Star className={`w-4 h-4 ${starredFiles.has(file.name) ? 'fill-yellow-400 text-yellow-400' : ''}`} />
+                                  {starredFiles.has(file.name) ? 'Unstar' : 'Star'}
                                 </DropdownMenuItem>
-                                <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
+                                <DropdownMenuItem
+                                  className="flex items-center gap-2 cursor-pointer"
+                                  onClick={() => handleArchiveFile(file.name)}
+                                >
                                   <Archive className="w-4 h-4" />
-                                  Archive
+                                  {archivedFiles.has(file.name) ? 'Restore' : 'Archive'}
                                 </DropdownMenuItem>
-                                <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
-                                  <Star className="w-4 h-4" />
-                                  Starred
-                                </DropdownMenuItem>
-                                <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
-                                  <Trash2 className="w-4 h-4 text-red-500" />
+                                <DropdownMenuItem
+                                  className="flex items-center gap-2 cursor-pointer text-red-600 hover:text-red-700"
+                                  onClick={() => { handleDeleteFile(file.name); }}>
+                                  <Trash2 className="w-4 h-4" />
                                   Delete
                                 </DropdownMenuItem>
                               </DropdownMenuGroup>
@@ -853,11 +1020,11 @@ function Home() {
                   {searchQuery || activeFilter ? (
                     <>
                       Showing {startIndex + 1} to {Math.min(endIndex, sortedRecentFiles.length)} of {sortedRecentFiles.length} results
-                      <span className="text-blue-600">
+                      {/* <span className="text-blue-600">
                         {searchQuery && ` (search: "${searchQuery}")`}
                         {activeFilter && ` (filter: ${activeFilter})`}
                         {` (from ${recentFiles.length} total)`}
-                      </span>
+                      </span> */}
                     </>
                   ) : (
                     `Showing ${startIndex + 1} to ${Math.min(endIndex, sortedRecentFiles.length)} of ${sortedRecentFiles.length} results`
