@@ -28,6 +28,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { MoreHorizontal, Share2, Archive, Trash2, ChevronLeft, ChevronRight, X, Star, Search, Copy, Check } from "lucide-react"
 import dummyData from '../data/dummy-data.json';
+import dummyUser from '../data/dummy-user-data.json';
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field"
 import { Toaster } from "@/components/ui/sonner"
 import { toast } from "sonner"
@@ -61,10 +62,21 @@ function Home() {
 
   const [activeFilter, setActiveFilter] = useState('');
   const [sortOrder, setSortOrder] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
+
+  const [emailInput, setEmailInput] = useState('') // For email input in share dialog
+  const [searchQuery, setSearchQuery] = useState('') // For main search input
 
   const [starredFiles, setStarredFiles] = useState(new Set());
   const [archivedFiles, setArchivedFiles] = useState(new Set());
+
+  const [isOpen, setIsOpen] = useState(false)
+  const [userData, setUserData] = useState([]);
+  const [searchInput, setSearchInput] = useState('')
+  const [sharedUsers, setSharedUsers] = useState([])
+  const [filteredUsers, setFilteredUsers] = useState(userData)
+  const [selectedPermission, setSelectedPermission] = useState('view')
+
+  const PERMISSIONS = ['view', 'comment', 'edit']
 
   const handleStarFile = (fileName) => {
     const isStarred = starredFiles.has(fileName);
@@ -255,6 +267,90 @@ function Home() {
       setRecentFiles([]);
     }
   }, []);
+
+  useEffect(() => {
+
+    try {
+      const dataUser = dummyUser;
+      const user = dataUser.map(user => ({
+        name: user.name,
+        email: user.email
+      }));
+
+      setUserData(user);
+
+    } catch (error) {
+      console.error('Error processing user data:', error);
+      setUserData([]);
+    }
+
+  }, []);
+
+  const handleSearchChange = (value) => {
+    setSearchInput(value)
+    const filtered = userData.filter(
+      (user) =>
+        user.name.toLowerCase().includes(value.toLowerCase()) ||
+        user.email.toLowerCase().includes(value.toLowerCase())
+    )
+    setFilteredUsers(filtered)
+  }
+
+  const addUserFromList = (user) => {
+    const alreadyShared = sharedUsers.some((su) => su.id === user.id)
+    if (!alreadyShared) {
+      setSharedUsers([
+        ...sharedUsers,
+        {
+          ...user,
+          permission: selectedPermission,
+        },
+      ])
+    }
+    setSearchInput('')
+    setFilteredUsers(userData)
+  }
+
+  const addUserByEmail = () => {
+    if (emailInput.trim()) {
+      const alreadyShared = sharedUsers.some((su) => su.email === emailInput)
+      if (!alreadyShared) {
+        setSharedUsers([
+          ...sharedUsers,
+          {
+            id: Date.now().toString(),
+            name: emailInput.split('@')[0],
+            email: emailInput,
+            permission: selectedPermission,
+          },
+        ])
+      }
+      setEmailInput('')
+    }
+  }
+
+  const removeUser = (email) => {
+    setSharedUsers(sharedUsers.filter((user) => user.email !== email))
+  }
+
+  const updatePermission = (email, permission) => {
+    setSharedUsers(
+      sharedUsers.map((user) =>
+        user.email === email ? { ...user, permission } : user
+      )
+    )
+  }
+
+  const handleShare = () => {
+    console.log('[v0] Sharing with users:', sharedUsers)
+    setIsOpen(false)
+    // Reset form
+    setSharedUsers([])
+    setEmailInput('')
+    setSearchInput('')
+    setSelectedPermission('view')
+  }
+
 
   const totalStorage = 16;
 
@@ -737,9 +833,9 @@ function Home() {
                   className='border-2 rounded-full pl-8 p-1 w-full hover:border-black'
                   type="text"
                   id="search"
-                  placeholder='Search'
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search files"
                 />
               </div>
               <div className='flex flex-row items-center gap-2'>
@@ -859,153 +955,236 @@ function Home() {
                         <TableCell className="text-center w-[12%]">{file.size}</TableCell>
                         <TableCell className="text-center w-[13%]">{file.sharedWith}</TableCell>
                         <TableCell className="text-right w-[10%]">
-                          <Dialog>
-                            <DialogTrigger>
-                              <Tooltip>
-                                <TooltipTrigger>
-                                  <Share2 className="w-4 h-4" />
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Share</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-md">
-                              <DialogHeader>
-                                <DialogTitle>Share File</DialogTitle>
-                                <DialogDescription>
-                                  Share this file with others via email or link
-                                </DialogDescription>
-                                <Tabs defaultValue="account" className="w-full">
-                                  <TabsList className="grid w-full grid-cols-2">
-                                    <TabsTrigger value="users">Share with Users</TabsTrigger>
-                                    <TabsTrigger value="link">Share Link</TabsTrigger>
-                                  </TabsList>
-                                  <TabsContent value="users">
-                                    <div className="mt-4 space-y-2">
-                                      <Label htmlFor="permission">Default Permission</Label>
-                                      <Select>
-                                        <SelectTrigger className="w-fit">
-                                          <SelectValue placeholder="Permission" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          <SelectItem value="view">View</SelectItem>
-                                          <SelectItem value="comment">Comment</SelectItem>
-                                          <SelectItem value="edit">Edit</SelectItem>
-                                        </SelectContent>
-                                      </Select>
-                                    </div>
-                                    <div className="mt-4 space-y-2">
-                                      <Label htmlFor="email">Share by Email</Label>
-                                      <div className="flex gap-2">
-                                        <Input
-                                          id="email"
-                                          placeholder="Enter email address"
-                                          type="email"
-                                        />
-                                        <Button size="sm">
-                                          Add
-                                        </Button>
-                                      </div>
-                                    </div>
-                                    <div className="mt-4 space-y-2">
-                                      <Label htmlFor="search">Or select from users</Label>
-                                      <div className="relative">
-                                        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                                        <Input
-                                          id="search"
-                                          placeholder="Search users..."
-                                          className="pl-8"
-                                        />
-                                      </div>
-                                    </div>
-                                    <div className="flex gap-2 justify-end pt-2">
-                                      <Button variant="outline">
-                                        Cancel
-                                      </Button>
-                                      <Button>
-                                        Share
-                                      </Button>
-                                    </div>
-                                  </TabsContent>
-                                  <TabsContent value="link">
-                                    <div className="space-y-2">
-                                      <Label>Share via Link</Label>
-                                      <p className="text-sm text-muted-foreground">
-                                        Anyone with this link can access the file
-                                      </p>
-                                    </div>
-                                    <div className="my-4 space-y-2">
-                                      <Label htmlFor="share-link">Share Link</Label>
-                                      <div className="flex gap-2">
-                                        <Input
-                                          id="share-link"
-                                          readOnly
-                                          className="bg-muted"
-                                        />
-                                        <Button
-                                          size="sm"
-                                          variant="outline"
-                                          className="px-3 bg-transparent"
-                                        >
-                                        </Button>
-                                      </div>
-                                    </div>
+                          <TableCell className="text-right w-[10%]">
+                            <div className="flex items-center justify-end gap-2">
+                              {/* Share Dialog - Remove nested Tooltip */}
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0" title="Share file">
+                                    <Share2 className="w-4 h-4" />
+                                    <span className="sr-only">Share</span>
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-md">
+                                  <DialogHeader>
+                                    <DialogTitle>Share File</DialogTitle>
+                                    <DialogDescription>
+                                      Share this file with others via email or link
+                                    </DialogDescription>
+                                    <Tabs defaultValue="users" className="w-full">
+                                      <TabsList className="grid w-full grid-cols-2">
+                                        <TabsTrigger value="users">Share with Users</TabsTrigger>
+                                        <TabsTrigger value="link">Share Link</TabsTrigger>
+                                      </TabsList>
+                                      <TabsContent value="users">
+                                        <div className="mt-4 space-y-2">
+                                          <Label htmlFor="permission">Default Permission</Label>
+                                          <Select value={selectedPermission} onValueChange={setSelectedPermission}>
+                                            <SelectTrigger className="w-fit">
+                                              <SelectValue placeholder="Permission" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                              <SelectItem value="view">View</SelectItem>
+                                              <SelectItem value="comment">Comment</SelectItem>
+                                              <SelectItem value="edit">Edit</SelectItem>
+                                            </SelectContent>
+                                          </Select>
+                                        </div>
+                                        <div className="mt-4 space-y-2">
+                                          <Label htmlFor="email">Share by Email</Label>
+                                          <div className="flex gap-2">
+                                            <Input
+                                              id="email"
+                                              type="email"
+                                              value={emailInput}
+                                              onChange={(e) => setEmailInput(e.target.value)}
+                                              placeholder="Enter email"
+                                              onKeyDown={(e) => e.key === 'Enter' && addUserByEmail()}
+                                            />
+                                            <Button onClick={addUserByEmail} size="sm">
+                                              Add
+                                            </Button>
+                                          </div>
+                                        </div>
+                                        <div className="mt-4 space-y-2">
+                                          <Label htmlFor="search">Or select from users</Label>
+                                          <div className="relative">
+                                            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                                            <Input
+                                              id="search"
+                                              placeholder="Search users..."
+                                              className="pl-8"
+                                              value={searchInput}
+                                              onChange={(e) => handleSearchChange(e.target.value)}
+                                            />
+                                          </div>
+                                          {searchInput && (
+                                            <ScrollArea className="h-32 border rounded-md p-2">
+                                              <div className="space-y-1">
+                                                {filteredUsers.map((user) => (
+                                                  <button
+                                                    key={user.id}
+                                                    onClick={() => addUserFromList(user)}
+                                                    className="w-full text-left px-3 py-2 rounded-md hover:bg-muted transition-colors text-sm"
+                                                  >
+                                                    <div className="font-medium">{user.name}</div>
+                                                    <div className="text-xs text-muted-foreground">
+                                                      {user.email}
+                                                    </div>
+                                                  </button>
+                                                ))}
+                                              </div>
+                                            </ScrollArea>
+                                          )}
+                                        </div>
 
-                                    <div className="my-4 space-y-2">
-                                      <Label htmlFor="link-permission">Default Permission</Label>
-                                      <Select defaultValue="view">
-                                        <SelectTrigger id="link-permission">
-                                          <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          <SelectItem value="view">View</SelectItem>
-                                          <SelectItem value="comment">Comment</SelectItem>
-                                          <SelectItem value="edit">Edit</SelectItem>
-                                        </SelectContent>
-                                      </Select>
-                                    </div>
+                                        {sharedUsers.length > 0 && (
+                                          <div className="space-y-2 my-5">
+                                            <Label>Shared With</Label>
+                                            <div className="space-y-2 max-h-48 overflow-y-auto">
+                                              {sharedUsers.map((user) => (
+                                                <div
+                                                  key={user.email}
+                                                  className="flex items-center justify-between gap-2 p-2 rounded-md border bg-muted/50"
+                                                >
+                                                  <div className="flex-1 min-w-0">
+                                                    <div className="font-sm text-sm">{user.name}</div>
+                                                    <div className="text-xs text-muted-foreground truncate">
+                                                      {user.email}
+                                                    </div>
+                                                  </div>
+                                                  <div className="flex items-center gap-2">
+                                                    <Select
+                                                      value={user.permission}
+                                                      onValueChange={(val) => updatePermission(user.email, val)}
+                                                    >
+                                                      <SelectTrigger className="w-28 h-8">
+                                                        <SelectValue />
+                                                      </SelectTrigger>
+                                                      <SelectContent>
+                                                        {PERMISSIONS.map((permission) => (
+                                                          <SelectItem key={permission} value={permission}>
+                                                            {permission.charAt(0).toUpperCase() + permission.slice(1)}
+                                                          </SelectItem>
+                                                        ))}
+                                                      </SelectContent>
+                                                    </Select>
+                                                    <Button
+                                                      variant="ghost"
+                                                      size="sm"
+                                                      onClick={() => removeUser(user.email)}
+                                                      className="h-8 w-8 p-0"
+                                                    >
+                                                      <X className="w-4 h-4" />
+                                                    </Button>
+                                                  </div>
+                                                </div>
+                                              ))}
+                                            </div>
+                                          </div>
+                                        )}
 
-                                    <Button className="w-full">
-                                      Done
-                                    </Button>
-                                  </TabsContent>
-                                </Tabs>
-                              </DialogHeader>
-                            </DialogContent>
-                          </Dialog>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" className="cursor-pointer h-8 w-8 p-0">
-                                <span className="sr-only">Open menu</span>
-                                <MoreHorizontal />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuGroup>
-                                <DropdownMenuItem
-                                  className="flex items-center gap-2 cursor-pointer"
-                                  onClick={() => handleStarFile(file.name)}
-                                >
-                                  <Star className={`w-4 h-4 ${starredFiles.has(file.name) ? 'fill-yellow-400 text-yellow-400' : ''}`} />
-                                  {starredFiles.has(file.name) ? 'Unstar' : 'Star'}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  className="flex items-center gap-2 cursor-pointer"
-                                  onClick={() => handleArchiveFile(file.name)}
-                                >
-                                  <Archive className="w-4 h-4" />
-                                  {archivedFiles.has(file.name) ? 'Restore' : 'Archive'}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  className="flex items-center gap-2 cursor-pointer text-red-600 hover:text-red-700"
-                                  onClick={() => { handleDeleteFile(file.name); }}>
-                                  <Trash2 className="w-4 h-4" />
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuGroup>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                                        <div className="flex gap-2 justify-end pt-2">
+                                          <Button variant="outline" onClick={() => setIsOpen(false)}>
+                                            Cancel
+                                          </Button>
+                                          <Button
+                                            onClick={handleShare}
+                                            disabled={sharedUsers.length === 0}
+                                          >
+                                            Share ({sharedUsers.length})
+                                          </Button>
+                                        </div>
+                                      </TabsContent>
+                                      <TabsContent value="link">
+                                        <div className="space-y-2">
+                                          <Label>Share via Link</Label>
+                                          <p className="text-sm text-muted-foreground">
+                                            Anyone with this link can access the file
+                                          </p>
+                                        </div>
+                                        <div className="my-4 space-y-2">
+                                          <Label htmlFor="share-link">Share Link</Label>
+                                          <div className="flex gap-2">
+                                            <Input
+                                              id="share-link"
+                                              value={`https://filerepository.com/share/${file.name}`}
+                                              readOnly
+                                              className="bg-muted"
+                                            />
+                                            <Button
+                                              size="sm"
+                                              variant="outline"
+                                              className="px-3"
+                                              onClick={() => {
+                                                navigator.clipboard.writeText(`https://filerepository.com/share/${file.name}`);
+                                                toast.success("Link copied to clipboard!");
+                                              }}
+                                            >
+                                              <Copy className="w-4 h-4" />
+                                            </Button>
+                                          </div>
+                                        </div>
+                                        <div className="my-4 space-y-2">
+                                          <Label htmlFor="link-permission">Default Permission</Label>
+                                          <Select defaultValue="view">
+                                            <SelectTrigger id="link-permission">
+                                              <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                              <SelectItem value="view">View</SelectItem>
+                                              <SelectItem value="comment">Comment</SelectItem>
+                                              <SelectItem value="edit">Edit</SelectItem>
+                                            </SelectContent>
+                                          </Select>
+                                        </div>
+                                        <Button onClick={() => setIsOpen(false)} className="w-full">Done</Button>
+                                      </TabsContent>
+                                    </Tabs>
+                                  </DialogHeader>
+                                </DialogContent>
+                              </Dialog>
+
+                              {/* More Actions Dropdown */}
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" className="h-8 w-8 p-0" title="More actions">
+                                    <span className="sr-only">Open menu</span>
+                                    <MoreHorizontal className="w-4 h-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuGroup>
+                                    <DropdownMenuItem
+                                      className="flex items-center gap-2 cursor-pointer"
+                                      onSelect={() => handleStarFile(file.name)}
+                                    >
+                                      <Star className={`w-4 h-4 ${starredFiles.has(file.name) ? 'fill-yellow-400 text-yellow-400' : ''}`} />
+                                      {starredFiles.has(file.name) ? 'Unstar' : 'Star'}
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      className="flex items-center gap-2 cursor-pointer"
+                                      onSelect={() => handleArchiveFile(file.name)}
+                                    >
+                                      <Archive className="w-4 h-4" />
+                                      {archivedFiles.has(file.name) ? 'Restore' : 'Archive'}
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      className="flex items-center gap-2 cursor-pointer text-red-600 hover:text-red-700"
+                                      onSelect={() => {
+                                        if (window.confirm(`Are you sure you want to delete "${file.name}"?`)) {
+                                          handleDeleteFile(file.name);
+                                        }
+                                      }}
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                      Delete
+                                    </DropdownMenuItem>
+                                  </DropdownMenuGroup>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          </TableCell>
                         </TableCell>
                       </TableRow>
                     ))
