@@ -10,6 +10,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 // Pages
 import DashboardOverview from './page/Home';
+import Starred from './page/Dashboard/Starred';
 
 function App() {
 
@@ -32,6 +33,7 @@ function App() {
             <Routes>
               <Route path="/" element={<DashboardOverview />} />
               <Route path="/dashboard/overview" element={<DashboardOverview />} />
+              <Route path="/dashboard/starred" element={<Starred />} />
             </Routes>
           </div>
         </SidebarInset>

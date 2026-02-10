@@ -62,12 +62,8 @@ const data = {
           url: "/dashboard/overview",
         },
         {
-          title: "Recent Files",
-          url: "#",
-        },
-        {
           title: "Starred Files",
-          url: "#",
+          url: "/dashboard/starred",
         },
       ],
     },
