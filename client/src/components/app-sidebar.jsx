@@ -69,24 +69,24 @@ const data = {
     },
     {
       title: "File Repository",
-      url: "#",
+      url: "/file-repository/all-file",
       icon: FolderOpen, // clearly represents files & folders
       items: [
         {
           title: "All Files",
-          url: "#",
+          url: "/file-repository/all-file",
         },
         {
           title: "Folders",
-          url: "#",
+          url: "/file-repository/folders",
         },
         {
           title: "Shared With Me",
-          url: "#",
+          url: "/file-repository/shared-with-me",
         },
         {
           title: "Trash",
-          url: "#",
+          url: "/file-repository/trash",
         },
       ],
     },

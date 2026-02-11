@@ -8,9 +8,15 @@ import {
 } from "@/components/ui/sidebar"
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
-// Pages
+// Dashboard Pages
 import DashboardOverview from './page/Home';
 import Starred from './page/Dashboard/Starred';
+
+//File Repository Pages
+import AllFile from './page/FileRepository/AllFile';
+import Folders from './page/FileRepository/Folders';
+import SharedWithMe from './page/FileRepository/SharedWithMe';
+import Trash from './page/FileRepository/Trash';
 
 function App() {
 
@@ -31,9 +37,17 @@ function App() {
           {/* Content */}
           <div className="flex flex-1 flex-col gap-4 pt-0 bg-[#dadada]">
             <Routes>
+
+              {/* Dashboard Pages */}
               <Route path="/" element={<DashboardOverview />} />
               <Route path="/dashboard/overview" element={<DashboardOverview />} />
               <Route path="/dashboard/starred" element={<Starred />} />
+
+              {/* File Repository Pages */}
+              <Route path="/file-repository/all-file" element={<AllFile />} />
+              <Route path="/file-repository/folders" element={<Folders />} />
+              <Route path="/file-repository/shared-with-me" element={<SharedWithMe />} />
+              <Route path="/file-repository/trash" element={<Trash />} />
             </Routes>
           </div>
         </SidebarInset>

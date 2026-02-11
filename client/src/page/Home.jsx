@@ -32,11 +32,6 @@ import dummyUser from '../data/dummy-user-data.json';
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field"
 import { Toaster } from "@/components/ui/sonner"
 import { toast } from "sonner"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
